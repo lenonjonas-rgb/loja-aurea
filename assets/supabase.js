@@ -68,6 +68,26 @@ window.AureaCloud = (() => {
       }).select().single();
       if (error) throw error;
       return data;
+    },
+    async signIn(email, password) {
+      await ready;
+      if (!client) throw new Error('Conexão com o Supabase indisponível.');
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return this.adminSession();
+    },
+    async adminSession() {
+      await ready;
+      if (!client) return null;
+      const { data: { user } } = await client.auth.getUser();
+      if (!user) return null;
+      const { data: profile, error } = await client.from('profiles').select('full_name, role').eq('id', user.id).maybeSingle();
+      if (error || !profile || profile.role !== 'admin') return null;
+      return { user, profile };
+    },
+    async signOut() {
+      await ready;
+      if (client) await client.auth.signOut();
     }
   };
 })();

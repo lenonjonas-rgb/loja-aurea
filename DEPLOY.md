@@ -4,9 +4,10 @@
 
 1. Crie um projeto em [Supabase](https://supabase.com/dashboard).
 2. Em **SQL Editor**, execute `supabase/schema.sql` e, depois, `supabase/002_roles_and_policies.sql`.
-3. Em **Storage**, crie o bucket privado `invoices` para notas fiscais.
-4. Em **Project Settings > API**, copie a URL do projeto e a chave `anon`.
-5. Copie `.env.example` para `.env.local` e informe os valores. Nunca publique esse arquivo.
+3. Em **Authentication > Users**, crie a usuária administradora e execute `supabase/003_create_store_owner.sql` no SQL Editor.
+4. Em **Storage**, crie o bucket privado `invoices` para notas fiscais.
+5. Em **Project Settings > API**, copie a URL do projeto e a chave `anon`.
+6. Copie `.env.example` para `.env.local` e informe os valores. Nunca publique esse arquivo.
 
 ## 2. GitHub
 
