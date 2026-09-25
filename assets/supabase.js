@@ -45,6 +45,20 @@ window.AureaCloud = (() => {
         expiration: coupon.expires_at
       }));
     },
+    async storeSettings() {
+      await ready;
+      if (!client) return null;
+      const { data, error } = await client.from('store_settings').select('*').eq('id', true).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    async saveStoreSettings(settings) {
+      await ready;
+      if (!client) throw new Error('Conexão com o Supabase indisponível.');
+      const { data, error } = await client.from('store_settings').upsert({ id: true, ...settings, updated_at: new Date().toISOString() }).select().single();
+      if (error) throw error;
+      return data;
+    },
     async saveProduct(product) {
       await ready;
       if (!client) return null;
