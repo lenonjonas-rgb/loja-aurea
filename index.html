@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase.js"></script>
   <style>
     :root { --ink:#20231e; --muted:#73786c; --line:#e8e7df; --paper:#fbfbf8; --cream:#f3f1e9; --lime:#dcec99; --pink:#f5d9d8; --coral:#dc6756; --white:#fff; }
     * { box-sizing:border-box; }
@@ -51,7 +53,7 @@
   <footer><div class="footer-grid"><div><a class="brand footer-brand" href="#inicio">áu<i>r</i>ea.</a><p class="footer-copy">Moda para acompanhar os seus muitos jeitos de existir.</p></div><div><h4>Comprar</h4><a href="#colecao">Novidades</a><a href="#colecao">Vestidos</a><a href="#colecao">Mais vendidos</a></div><div><h4>Ajuda</h4><a href="#">Entregas</a><a href="#">Trocas e devoluções</a><a href="#">Guia de tamanhos</a></div><div><h4>Contato</h4><a href="mailto:oi@aurea.com">oi@aurea.com</a><a href="#">Instagram</a><a href="#">WhatsApp</a><a href="admin.html">Área administrativa</a></div></div><div class="footer-bottom"><span>© 2026 ÁUREA. TODOS OS DIREITOS RESERVADOS.</span><span>FEITO COM CALMA, NO BRASIL.</span></div></footer>
   <div class="backdrop" id="backdrop"></div><aside class="drawer" id="drawer"><div class="drawer-head"><h2>Sua sacola</h2><button class="drawer-close" id="close-cart" aria-label="Fechar"><i data-lucide="x"></i></button></div><div class="cart-items" id="cart-items"><p style="color:#73786c;font-size:12px;padding-top:20px">Sua sacola está esperando uma peça especial.</p></div><div class="cart-foot"><div class="coupon"><input id="coupon-input" placeholder="CUPOM DE DESCONTO"><button id="apply-coupon">APLICAR</button></div><p class="coupon-message" id="coupon-message"></p><div class="total"><span>Total</span><span id="cart-total">R$ 0,00</span></div><button class="button checkout" id="checkout">Finalizar compra <i data-lucide="arrow-right" size="16"></i></button></div></aside><aside class="drawer account-drawer" id="account-drawer"><div class="drawer-head"><h2 id="account-title">Minha conta</h2><button class="drawer-close" id="close-account" aria-label="Fechar"><i data-lucide="x"></i></button></div><div class="account-content" id="account-content"></div></aside><div class="toast" id="toast"></div>
   <script>
-    const products = [
+    let products = [
       {id:1,name:'Vestido Serena',type:'Vestidos',price:289,tag:'NOVO',image:'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=650&q=85'},
       {id:2,name:'Conjunto Solara',type:'Conjuntos',price:349,tag:'BEST-SELLER',image:'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=650&q=85'},
       {id:3,name:'Camisa Brisa',type:'Essenciais',price:189,tag:'',image:'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=650&q=85'},
@@ -82,6 +84,8 @@
     document.addEventListener('submit', event => { if (event.target.id === 'signup-form') { event.preventDefault(); const form = new FormData(event.target); customer = { name: form.get('name'), email: form.get('email'), phone: form.get('phone'), points: 0, addresses: [], orders: [] }; saveCustomer(); syncOpenOrder(); renderAccount(); toast('Conta criada. Seus dados estão salvos neste navegador.'); } if (event.target.id === 'address-form') { event.preventDefault(); const form = new FormData(event.target); customer.addresses.push(Object.fromEntries(form.entries())); saveCustomer(); syncOpenOrder(); renderAccount(); toast('Endereço salvo com sucesso.'); } });
     document.addEventListener('click', event => { const cancelId = event.target.closest('[data-cancel-customer]')?.dataset.cancelCustomer; if (cancelId && customer) { const order = customer.orders.find(item => String(item.id) === cancelId); if (!order || Date.now() - order.createdAt > 604800000) return toast('O prazo de 7 dias para cancelamento expirou.'); order.cancelled = true; const adminOrders = JSON.parse(localStorage.getItem('aureaAdminOrders') || '[]'); const adminOrder = adminOrders.find(item => String(item.id) === cancelId); if (adminOrder) adminOrder.status = 'Cancelado'; localStorage.setItem('aureaAdminOrders', JSON.stringify(adminOrders)); saveCustomer(); renderAccount(); toast('Pedido cancelado com sucesso.'); } if (event.target.closest('#logout')) { localStorage.removeItem('aureaCustomer'); customer = null; renderAccount(); toast('Você saiu da sua conta.'); } });
     document.getElementById('show-loyalty').onclick = () => toast('Clube Áurea: 1 ponto para cada R$ 1 em compras.'); renderProducts(); renderCart();
+    AureaCloud.products().then(remoteProducts => { if (remoteProducts?.length) { products = remoteProducts; renderProducts(); } }).catch(() => {});
+    AureaCloud.coupons().then(remoteCoupons => { if (remoteCoupons?.length) localStorage.setItem('aureaAdminCoupons', JSON.stringify(remoteCoupons)); }).catch(() => {});
   </script>
 </body>
 </html>

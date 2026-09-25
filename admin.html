@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase.js"></script>
   <style>
     :root { --ink:#20231e; --muted:#73786c; --line:#e6e6df; --paper:#fafaf7; --cream:#f0efe8; --lime:#dcec99; --pink:#f5d9d8; --coral:#dc6756; --white:#fff; --blue:#d8e7f5; }
     * { box-sizing:border-box; } body { margin:0; background:var(--paper); color:var(--ink); font:13px "Plus Jakarta Sans",sans-serif; } button,input,select,textarea { font:inherit; } button { cursor:pointer; border:0; } .shell { min-height:100vh; display:grid; grid-template-columns:235px 1fr; }
@@ -75,6 +77,8 @@
     document.getElementById('social-product').onchange=renderPost; document.getElementById('social-coupon').onchange=renderPost; document.getElementById('social-caption').oninput=renderPost;
     document.getElementById('refresh-post').onclick=renderPost; document.getElementById('copy-caption').onclick=async()=>{const product=products.find(item=>item.id===Number(document.getElementById('social-product').value));const coupon=coupons.find(item=>item.id===Number(document.getElementById('social-coupon').value));const caption=`${document.getElementById('social-caption').value}\n\n${product.name} por ${money(Number(product.price))}.${coupon?` Use o cupom ${coupon.code} e ganhe ${coupon.discount}% OFF.`:''}\n\n#Aurea #ModaFeminina #NovaColecao`;try{await navigator.clipboard.writeText(caption);toast('Legenda copiada para o Instagram.');}catch{toast('Não foi possível copiar automaticamente.');}};
     renderDashboard();renderProducts();renderCoupons();renderOrders();renderSocialOptions();lucide.createIcons();
+    AureaCloud.products().then(remoteProducts => { if (remoteProducts?.length) { products = remoteProducts; renderProducts(); renderSocialOptions(); } }).catch(() => {});
+    AureaCloud.coupons().then(remoteCoupons => { if (remoteCoupons?.length) { coupons = remoteCoupons; renderCoupons(); renderSocialOptions(); } }).catch(() => {});
   </script>
 </body>
 </html>
