@@ -229,16 +229,7 @@ window.AureaCloud = (() => {
       await ensureCustomerProfile(user);
       const { data, error } = await client.from('profiles').update({ full_name: profile.name, phone: profile.phone }).eq('id', user.id).select().single();
       if (error) throw error;
-      let email = user.email;
-      let pendingEmail = '';
-      const requestedEmail = String(profile.email || '').trim();
-      if (requestedEmail && requestedEmail.toLowerCase() !== String(user.email || '').toLowerCase()) {
-        const { data: emailUpdate, error: emailError } = await client.auth.updateUser({ email: requestedEmail });
-        if (emailError) throw emailError;
-        email = emailUpdate.user?.email || user.email;
-        pendingEmail = emailUpdate.user?.new_email || '';
-      }
-      return { ...data, email, pendingEmail };
+      return { ...data, email: user.email };
     },
     async saveAddress(address) {
       await ready;

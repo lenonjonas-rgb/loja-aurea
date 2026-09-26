@@ -7,8 +7,9 @@
 3. Em **Authentication > Users**, crie a usuária administradora e execute `supabase/003_create_store_owner.sql` no SQL Editor.
 4. Em **Storage**, crie o bucket privado `invoices` para notas fiscais.
 5. Em **Project Settings > API**, copie a URL do projeto e a chave `anon`.
-6. Em **Authentication > URL Configuration**, configure a URL do site publicado como Site URL e inclua a URL do site na lista de Redirect URLs para confirmação de conta e recuperação de senha.
-7. Copie `.env.example` para `.env.local` e informe os valores. Configure `CORREIOS_TOKEN` com um token válido da API dos Correios e mantenha `CORREIOS_SERVICE_CODE=03298` para PAC. Nunca publique esse arquivo.
+6. Em **Authentication > URL Configuration**, configure a URL do site publicado como Site URL e inclua a URL do site na lista de Redirect URLs para recuperação de senha.
+7. Em **Authentication > Providers > Email**, desative **Confirm email** para que o cadastro crie a sessão sem enviar confirmação ao cliente.
+8. Copie `.env.example` para `.env.local` e informe os valores. Configure `CORREIOS_TOKEN` com um token válido da API dos Correios e mantenha `CORREIOS_SERVICE_CODE=03298` para PAC. Nunca publique esse arquivo.
 
 ## 2. GitHub
 
