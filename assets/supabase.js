@@ -225,7 +225,23 @@ window.AureaCloud = (() => {
       if (!client) throw new Error('Conexão com o Supabase indisponível.');
       const { data: { user } } = await client.auth.getUser();
       if (!user) throw new Error('Entre na sua conta para continuar.');
-      const { data, error } = await client.from('addresses').upsert({ ...address, user_id: user.id }).select().single();
+      const profile = {
+        id: user.id,
+        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Cliente',
+        phone: user.user_metadata?.phone || null
+      };
+      const { error: profileError } = await client.from('profiles').upsert(profile, { onConflict: 'id', ignoreDuplicates: true });
+      if (profileError) throw profileError;
+      const payload = { ...address, user_id: user.id };
+      let { data, error } = await client.from('addresses').upsert(payload).select().single();
+      const optionalColumnMissing = error && ['PGRST204', '42703'].includes(error.code) && /(complement|is_default)/i.test(error.message || '');
+      if (optionalColumnMissing) {
+        const { complement, is_default, ...baseAddress } = payload;
+        const retry = await client.from('addresses').upsert(baseAddress).select().single();
+        data = retry.data;
+        error = retry.error;
+        if (!error && data) data = { ...data, complement: complement || '', is_default: Boolean(is_default) };
+      }
       if (error) throw error;
       return data;
     },
