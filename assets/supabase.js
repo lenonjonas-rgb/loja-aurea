@@ -108,6 +108,36 @@ window.AureaCloud = (() => {
     async signOut() {
       await ready;
       if (client) await client.auth.signOut();
+    },
+    async records(table) {
+      await ready;
+      if (!client) return [];
+      const { data, error } = await client.from(table).select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    async saveRecord(table, record) {
+      await ready;
+      if (!client) throw new Error('Conexão com o Supabase indisponível.');
+      const { data, error } = await client.from(table).upsert(record).select().single();
+      if (error) throw error;
+      return data;
+    },
+    async deleteRecord(table, id) {
+      await ready;
+      if (!client) throw new Error('Conexão com o Supabase indisponível.');
+      const { error } = await client.from(table).delete().eq('id', id);
+      if (error) throw error;
+    },
+    async createAdminUser(payload) {
+      await ready;
+      if (!client) throw new Error('Conexão com o Supabase indisponível.');
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) throw new Error('Sua sessão expirou. Entre novamente.');
+      const response = await fetch('/api/admin-users', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify(payload) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível criar a usuária.');
+      return data;
     }
   };
 })();
