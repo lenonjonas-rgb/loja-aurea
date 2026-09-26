@@ -3,7 +3,7 @@
 ## 1. Supabase
 
 1. Crie um projeto em [Supabase](https://supabase.com/dashboard).
-2. Em **SQL Editor**, execute `supabase/schema.sql` e, depois, `supabase/002_roles_and_policies.sql`.
+2. Para um projeto novo, execute as migrações SQL numeradas em ordem. Como o projeto existente já recebeu as migrações anteriores, execute agora somente `supabase/008_finance_catalog.sql`.
 3. Em **Authentication > Users**, crie a usuária administradora e execute `supabase/003_create_store_owner.sql` no SQL Editor.
 4. Em **Storage**, crie o bucket privado `invoices` para notas fiscais.
 5. Em **Project Settings > API**, copie a URL do projeto e a chave `anon`.
@@ -31,4 +31,4 @@ git push -u origin main
 
 ## Importante
 
-O site atual usa `localStorage` como demonstração. O schema, as variáveis e o deploy estão prontos; para dados compartilhados entre clientes e administração, o próximo passo é substituir a persistência local pelas consultas Supabase e proteger o painel administrativo com papéis de usuário.
+As métricas financeiras usam pedidos pagos presentes em `public.orders`, itens em `public.order_items`, despesas registradas e alíquotas por UF. Configure as taxas com sua contabilidade. Pedidos criados apenas no armazenamento local não entram nos relatórios financeiros.

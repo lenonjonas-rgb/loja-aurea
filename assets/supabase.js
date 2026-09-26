@@ -129,6 +129,49 @@ window.AureaCloud = (() => {
       const { error } = await client.from(table).delete().eq('id', id);
       if (error) throw error;
     },
+    async financeSummary(startDate, endDate) {
+      await ready;
+      if (!client) throw new Error('Conexão com o Supabase indisponível.');
+      const [ordersResult, expensesResult] = await Promise.all([
+        client.from('orders').select('id,total,tax_amount,shipping_cost,shipping_state,order_items(product_id,unit_cost,supply_cost,quantity)').in('status', ['paid','separating','shipped','delivered']).gte('paid_at', startDate).lt('paid_at', endDate),
+        client.from('store_expenses').select('amount').gte('expense_date', startDate.slice(0,10)).lt('expense_date', endDate.slice(0,10))
+      ]);
+      if (ordersResult.error) throw ordersResult.error;
+      if (expensesResult.error) throw expensesResult.error;
+      const orders = ordersResult.data || [];
+      const sales = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+      const productIds = [...new Set(orders.flatMap(order => (order.order_items || []).map(item => item.product_id).filter(Boolean)))];
+      let productCosts = new Map();
+      let supplyCosts = new Map();
+      if (productIds.length) {
+        const [productsResult, mappingsResult] = await Promise.all([
+          client.from('products').select('id,cost_price').in('id', productIds),
+          client.from('product_supplies').select('product_id,quantity_per_product,supplies(unit_cost)').in('product_id', productIds)
+        ]);
+        if (productsResult.error) throw productsResult.error;
+        if (mappingsResult.error) throw mappingsResult.error;
+        productCosts = new Map((productsResult.data || []).map(product => [product.id, Number(product.cost_price || 0)]));
+        for (const mapping of mappingsResult.data || []) {
+          const cost = Number(mapping.supplies?.unit_cost || 0) * Number(mapping.quantity_per_product || 0);
+          supplyCosts.set(mapping.product_id, (supplyCosts.get(mapping.product_id) || 0) + cost);
+        }
+      }
+      const cogs = orders.reduce((sum, order) => sum + (order.order_items || []).reduce((items, item) => {
+        const productCost = Number(item.unit_cost || 0) || productCosts.get(item.product_id) || 0;
+        const supplyCost = Number(item.supply_cost || 0) || supplyCosts.get(item.product_id) || 0;
+        return items + (productCost + supplyCost) * Number(item.quantity || 0);
+      }, 0), 0);
+      const expenses = (expensesResult.data || []).reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+      const states = [...new Set(orders.map(order => order.shipping_state).filter(Boolean))];
+      let rates = new Map();
+      if (states.length) {
+        const ratesResult = await client.from('state_tax_rates').select('state,rate_percent').in('state', states);
+        if (ratesResult.error) throw ratesResult.error;
+        rates = new Map((ratesResult.data || []).map(rate => [rate.state, Number(rate.rate_percent)]));
+      }
+      const taxes = orders.reduce((sum, order) => sum + (Number(order.tax_amount || 0) || Number(order.total || 0) * (rates.get(order.shipping_state) || 0) / 100), 0);
+      return { sales, cogs, expenses, taxes, totalCosts: cogs + expenses, orderCount: orders.length };
+    },
     async createAdminUser(payload) {
       await ready;
       if (!client) throw new Error('Conexão com o Supabase indisponível.');
