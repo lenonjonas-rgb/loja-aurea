@@ -121,5 +121,42 @@
     document.addEventListener('click',event=>{const choice=event.target.closest('#detail-color [data-group="color"]');if(!choice)return;const productId=document.querySelector('[data-detail-add]')?.dataset.detailAdd;const product=products.find(item=>String(item.id)===String(productId));if(product)applySelectedProductColor(product,choice.dataset.choice);});
     document.addEventListener('click',event=>{const add=event.target.closest('[data-detail-add]');if(!add)return;const item=cart[cart.length-1];const product=products.find(entry=>String(entry.id)===String(add.dataset.detailAdd));if(!item||!product)return;const variant=findProductColorVariant(product,item.selectedColor);if(variant?.image){item.image=variant.image;syncOpenOrder();renderCart();}});
   </script>
+  <script>
+    let confirmedAddressProfile=null;
+    const saveAddressWithLocalSync=AureaCloud.saveAddress.bind(AureaCloud);
+    AureaCloud.saveAddress=async address=>{
+      const saved=await saveAddressWithLocalSync(address);
+      if(!customer?.id)return saved;
+      let addresses=(customer.addresses||[]).filter(item=>String(item.id)!==String(saved.id));
+      if(saved.is_default)addresses=addresses.map(item=>({...item,is_default:false}));
+      addresses.push(saved);
+      customer.addresses=addresses;
+      saveCustomer();
+      confirmedAddressProfile={...customer,addresses};
+      return saved;
+    };
+    const customerProfileWithAddressSync=AureaCloud.customerProfile.bind(AureaCloud);
+    AureaCloud.customerProfile=async()=>{
+      if(confirmedAddressProfile){const profile=confirmedAddressProfile;confirmedAddressProfile=null;return profile;}
+      return customerProfileWithAddressSync();
+    };
+    function calculateSavedAddressShipping(){
+      const address=customer?.addresses?.find(item=>item.is_default)||customer?.addresses?.[0];
+      const cep=String(address?.zip_code||address?.zip||'').replace(/\D/g,'');
+      const input=document.getElementById('shipping-cep');
+      const calculate=document.getElementById('calculate-shipping');
+      if(!address||cep.length!==8||!input||!calculate||!storeSettings?.origin_zip_code)return;
+      input.value=`${cep.slice(0,5)}-${cep.slice(5)}`;
+      const productId=document.querySelector('[data-detail-add]')?.dataset.detailAdd||'';
+      const quoteKey=`${productId}:${cep}`;
+      if(input.dataset.quoteKey===quoteKey)return;
+      input.dataset.quoteKey=quoteKey;
+      calculate.click();
+    }
+    const openProductDetailWithSavedAddress=openProductDetail;
+    openProductDetail=function(productId){openProductDetailWithSavedAddress(productId);calculateSavedAddressShipping();};
+    AureaCloud.customerProfile().then(profile=>{if(profile){customer=profile;saveCustomer();calculateSavedAddressShipping();}}).catch(()=>{});
+    AureaCloud.storeSettings().then(settings=>{if(settings){storeSettings=settings;calculateSavedAddressShipping();}}).catch(()=>{});
+  </script>
 </body>
 </html>

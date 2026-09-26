@@ -8,7 +8,7 @@
 4. Em **Storage**, crie o bucket privado `invoices` para notas fiscais.
 5. Em **Project Settings > API**, copie a URL do projeto e a chave `anon`.
 6. Em **Authentication > URL Configuration**, configure a URL do site publicado como Site URL e inclua a URL do site na lista de Redirect URLs para confirmação de conta e recuperação de senha.
-7. Copie `.env.example` para `.env.local` e informe os valores. Nunca publique esse arquivo.
+7. Copie `.env.example` para `.env.local` e informe os valores. Configure `CORREIOS_TOKEN` com um token válido da API dos Correios e mantenha `CORREIOS_SERVICE_CODE=03298` para PAC. Nunca publique esse arquivo.
 
 ## 2. GitHub
 
@@ -27,8 +27,9 @@ git push -u origin main
 
 1. Acesse [Vercel](https://vercel.com/new) e importe o repositório `loja-aurea`.
 2. Mantenha o framework como **Other** e não configure comando de build nem diretório de saída.
-3. Em **Environment Variables**, crie `SUPABASE_URL` e `SUPABASE_ANON_KEY` com os valores do Supabase.
-4. Clique em **Deploy**. A página inicial será `index.html` e o painel será `/admin`.
+3. Em **Environment Variables**, crie `SUPABASE_URL` e `SUPABASE_ANON_KEY` com os valores do Supabase, `CORREIOS_TOKEN` com um token válido da API dos Correios e `CORREIOS_SERVICE_CODE` com `03298` para PAC.
+4. No painel administrativo, cadastre em **Dados da loja** o endereço e o CEP de origem do remetente. Esse CEP será usado nas cotações.
+5. Clique em **Deploy**. A página inicial será `index.html` e o painel será `/admin`.
 
 ## Importante
 

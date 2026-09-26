@@ -6,13 +6,24 @@ module.exports = async (request, response) => {
   if (!token) return response.status(503).json({ error: 'Cálculo dos Correios ainda não foi configurado.' });
   if (!cepDestino || !cepOrigem) return response.status(400).json({ error: 'CEP de origem e destino são obrigatórios.' });
 
+  const originCep = String(cepOrigem).replace(/\D/g, '');
+  const destinationCep = String(cepDestino).replace(/\D/g, '');
+  const weightKg = Number(peso || 0.3);
+  const dimensions = [comprimento || 20, largura || 15, altura || 5].map(Number);
+  if (!/^\d{8}$/.test(originCep) || !/^\d{8}$/.test(destinationCep)) {
+    return response.status(400).json({ error: 'Informe CEPs válidos com 8 dígitos.' });
+  }
+  if (!Number.isFinite(weightKg) || weightKg <= 0 || dimensions.some(value => !Number.isFinite(value) || value <= 0)) {
+    return response.status(400).json({ error: 'Peso e dimensões devem ser valores válidos maiores que zero.' });
+  }
+
   const query = new URLSearchParams({
-    cepOrigem: String(cepOrigem).replace(/\D/g, ''),
-    cepDestino: String(cepDestino).replace(/\D/g, ''),
-    psObjeto: String(Math.max(1, Math.round(Number(peso || 0.3) * 1000)),
-    comprimento: String(comprimento || 20),
-    largura: String(largura || 15),
-    altura: String(altura || 5)
+    cepOrigem: originCep,
+    cepDestino: destinationCep,
+    psObjeto: String(Math.max(1, Math.round(weightKg * 1000))),
+    comprimento: String(dimensions[0]),
+    largura: String(dimensions[1]),
+    altura: String(dimensions[2])
   });
 
   try {
