@@ -3,7 +3,7 @@
 ## 1. Supabase
 
 1. Crie um projeto em [Supabase](https://supabase.com/dashboard).
-2. Para um projeto novo, execute as migrações SQL numeradas em ordem. Se o projeto já recebeu a migração 008, execute `supabase/009_tax_reference_settings.sql` e depois `supabase/010_staff_permissions_product_codes_addresses.sql`.
+2. Para um projeto novo, execute as migrações SQL numeradas em ordem. Se o projeto já recebeu a migração 008, execute `supabase/009_tax_reference_settings.sql`, `supabase/010_staff_permissions_product_codes_addresses.sql` e `supabase/011_product_color_variants.sql`, nessa ordem.
 3. Em **Authentication > Users**, crie a usuária administradora e execute `supabase/003_create_store_owner.sql` no SQL Editor.
 4. Em **Storage**, crie o bucket privado `invoices` para notas fiscais.
 5. Em **Project Settings > API**, copie a URL do projeto e a chave `anon`.
