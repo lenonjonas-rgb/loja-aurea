@@ -1,0 +1,1 @@
+alter table public.banners alter column product_ids type text[] using product_ids::text[];
