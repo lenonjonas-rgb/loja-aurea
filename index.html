@@ -158,5 +158,64 @@
     AureaCloud.customerProfile().then(profile=>{if(profile){customer=profile;saveCustomer();calculateSavedAddressShipping();}}).catch(()=>{});
     AureaCloud.storeSettings().then(settings=>{if(settings){storeSettings=settings;calculateSavedAddressShipping();}}).catch(()=>{});
   </script>
+  <script>
+    const renderAccountWithProfile=renderAccount;
+    renderAccount=function(...args){
+      renderAccountWithProfile.apply(this,args);
+      const content=document.getElementById('account-content');
+      const loginForm=content.querySelector('#customer-login-form');
+      if(loginForm){
+        const recovery=content.querySelector('[data-account-mode="recovery"]');
+        const register=content.querySelector('[data-account-mode="signup"]');
+        if(recovery&&register){
+          const actions=document.createElement('div');
+          actions.className='account-auth-actions';
+          recovery.before(actions);
+          actions.append(recovery,register);
+          register.type='button';
+          register.classList.remove('logout');
+          register.classList.add('button','secondary');
+        }
+      }
+      const summary=content.querySelector('.account-summary');
+      if(!customer||!summary||content.querySelector('#customer-profile-form'))return;
+      const profileSection=document.createElement('section');
+      profileSection.className='account-section';
+      profileSection.innerHTML=`<h3>Dados pessoais</h3><form class="account-form" id="customer-profile-form"><label>Nome completo<input required name="name" autocomplete="name" value="${accountEscape(customer.name||'')}"></label><label>E-mail<input required name="email" type="email" autocomplete="email" value="${accountEscape(customer.email||'')}"></label><label>Telefone<input name="phone" type="tel" autocomplete="tel" value="${accountEscape(customer.phone||'')}"></label><p class="account-email-pending" data-email-pending hidden></p><button class="button" type="submit">Salvar dados</button></form>`;
+      summary.insertAdjacentElement('afterend',profileSection);
+      if(customer.pendingEmail){const pending=profileSection.querySelector('[data-email-pending]');pending.textContent=`Confirmação pendente para ${customer.pendingEmail}.`;pending.hidden=false;}
+    };
+    document.addEventListener('submit',async event=>{
+      const form=event.target;
+      if(form.id!=='customer-profile-form')return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const values=Object.fromEntries(new FormData(form).entries());
+      const submit=form.querySelector('[type="submit"]');
+      submit.disabled=true;
+      try{
+        if(customer?.id){
+          const saved=await AureaCloud.saveCustomerProfile({name:values.name.trim(),phone:values.phone.trim(),email:values.email.trim()});
+          customer.name=saved.full_name||values.name.trim();
+          customer.phone=saved.phone||'';
+          customer.email=saved.email||customer.email;
+          customer.pendingEmail=saved.pendingEmail||'';
+        }else{
+          customer.name=values.name.trim();
+          customer.phone=values.phone.trim();
+          customer.email=values.email.trim();
+        }
+        saveCustomer();
+        renderAccount();
+        toast(customer.pendingEmail?'Dados salvos. Confirme a alteração no novo e-mail.':'Dados pessoais atualizados.');
+      }catch(error){
+        submit.disabled=false;
+        toast(error.message||'Não foi possível salvar seus dados.');
+      }
+    },true);
+    const accountFlowStyle=document.createElement('style');
+    accountFlowStyle.textContent='.account-auth-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}.account-auth-actions .logout{margin:0}.account-auth-actions .button{margin:0}.account-email-pending{margin:0;color:var(--coral);font-size:11px;line-height:1.5}.account-profile-section{scroll-margin-top:16px}@media(max-width:420px){.account-auth-actions{align-items:stretch;flex-direction:column}.account-auth-actions>*{width:100%;text-align:center}}';
+    document.head.append(accountFlowStyle);
+  </script>
 </body>
 </html>

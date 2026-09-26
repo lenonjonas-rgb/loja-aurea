@@ -17,6 +17,16 @@ window.AureaCloud = (() => {
     return data.map(transform);
   }
 
+  async function ensureCustomerProfile(user) {
+    const profile = {
+      id: user.id,
+      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Cliente',
+      phone: user.user_metadata?.phone || null
+    };
+    const { error } = await client.from('profiles').upsert(profile, { onConflict: 'id', ignoreDuplicates: true });
+    if (error) throw error;
+  }
+
   return {
     ready,
     async products() {
@@ -216,22 +226,26 @@ window.AureaCloud = (() => {
       if (!client) throw new Error('Conexão com o Supabase indisponível.');
       const { data: { user } } = await client.auth.getUser();
       if (!user) throw new Error('Entre na sua conta para continuar.');
+      await ensureCustomerProfile(user);
       const { data, error } = await client.from('profiles').update({ full_name: profile.name, phone: profile.phone }).eq('id', user.id).select().single();
       if (error) throw error;
-      return data;
+      let email = user.email;
+      let pendingEmail = '';
+      const requestedEmail = String(profile.email || '').trim();
+      if (requestedEmail && requestedEmail.toLowerCase() !== String(user.email || '').toLowerCase()) {
+        const { data: emailUpdate, error: emailError } = await client.auth.updateUser({ email: requestedEmail });
+        if (emailError) throw emailError;
+        email = emailUpdate.user?.email || user.email;
+        pendingEmail = emailUpdate.user?.new_email || '';
+      }
+      return { ...data, email, pendingEmail };
     },
     async saveAddress(address) {
       await ready;
       if (!client) throw new Error('Conexão com o Supabase indisponível.');
       const { data: { user } } = await client.auth.getUser();
       if (!user) throw new Error('Entre na sua conta para continuar.');
-      const profile = {
-        id: user.id,
-        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Cliente',
-        phone: user.user_metadata?.phone || null
-      };
-      const { error: profileError } = await client.from('profiles').upsert(profile, { onConflict: 'id', ignoreDuplicates: true });
-      if (profileError) throw profileError;
+      await ensureCustomerProfile(user);
       const payload = { ...address, user_id: user.id };
       let { data, error } = await client.from('addresses').upsert(payload).select().single();
       const optionalColumnMissing = error && ['PGRST204', '42703'].includes(error.code) && /(complement|is_default)/i.test(error.message || '');
